@@ -9,8 +9,14 @@
 #include "DarkHelpNN.hpp"
 
 //#TODO Prediction has to be made outside of the class
-enum pokerSymbol {EMPTY, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, J, Q, K, DIAMOND, HEART, SPADE, CLOVER};
+enum pokerSymbol {EMPTY, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, DIAMOND, HEART, SPADE, CLOVER};
 
+static const std::string symbolToString[18] = {
+    "Empty",  "1",     "2",      "3",     "4",
+    "5",      "6",     "7",      "8",     "9",
+    "10",     "J",     "Q",      "K",
+    "Diamond","Heart", "Spade",  "Clover"
+};
 class Card_Identifier
 {
     class Card
@@ -24,6 +30,7 @@ class Card_Identifier
         [[nodiscard]] pokerSymbol getCardNumber() const {return cardNumber;}
         void setCardSuit(pokerSymbol newSuit) {cardSuit = newSuit;}
         void setCardNumber(pokerSymbol newNumber) {cardNumber = newNumber;}
+        std::string to_string() const { return symbolToString[cardNumber] + " " + symbolToString[cardSuit];}
     private:
         pokerSymbol cardSuit;
         pokerSymbol cardNumber;
@@ -35,12 +42,16 @@ public:
      *          2. Number of cards you want to detect
      * Output:  True when it received enough data to make a decision
      */
-    std::vector<Card> getCardDetectedHistory();
-    bool processData(const DarkHelp::PredictionResults&);
+    static bool processData(const DarkHelp::PredictionResults&);
 
-    std::vector<Card> cardDetectedHistory;
+    static std::vector<Card>::const_iterator getCardDetectedHistory();
+    static Card getLastDetectedCard();
+    static Card getSecondLastDetectedCard();
+    static void resetCardDetectedHistory();
+
 private:
-    Card identifier(const int[], pokerSymbol, int);
+    static inline std::vector<Card> cardDetectedHistory;
+    static Card identifier(const int[], pokerSymbol, int);
 
 
 

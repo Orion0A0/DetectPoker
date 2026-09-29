@@ -18,9 +18,9 @@ static const std::unordered_map<std::string, pokerSymbol> lookupTable =
     {"8", EIGHT},
     {"9", NINE},
     {"10", TEN},
-    {"J", J},
-    {"Q", Q},
-    {"K", K},
+    {"J", JACK},
+    {"Q", QUEEN},
+    {"K", KING},
     {"diamond", DIAMOND},
     {"heart", HEART},
     {"spade", SPADE},
@@ -38,8 +38,7 @@ bool Card_Identifier::processData(const DarkHelp::PredictionResults& dataVector)
         if (currentVectorValue > OFFSET)
         {
             timeOccurred_Shape[currentVectorValue - OFFSET]++;
-        }
-        else if (finalNumber != currentVectorValue)
+        } else if (finalNumber != currentVectorValue)
         {
             finalNumber = currentVectorValue;
             numOfChange_finalNumber++;
@@ -63,7 +62,7 @@ Card_Identifier::Card Card_Identifier::identifier(const int timeOccurred_Shape[]
 
     pokerSymbol mostOccurredSuit = EMPTY;
     int numAppearance = 0;
-    for (int i = 1; i <= NUMBER_OF_SUIT; i++)
+    for (int i = 1; i < NUMBER_OF_SUIT; i++)
     {
         if (timeOccurred_Shape[i] > numAppearance)
         {
@@ -78,4 +77,27 @@ Card_Identifier::Card Card_Identifier::identifier(const int timeOccurred_Shape[]
     return Card{mostOccurredSuit, finalNumber};
 }
 
+std::vector<Card_Identifier::Card>::const_iterator Card_Identifier::getCardDetectedHistory()
+{
+    return cardDetectedHistory.begin();
+}
+
+Card_Identifier::Card Card_Identifier::getLastDetectedCard()
+{
+    if (cardDetectedHistory.empty())
+        throw std::out_of_range("no card in history");
+    return cardDetectedHistory.back();
+}
+
+Card_Identifier::Card Card_Identifier::getSecondLastDetectedCard()
+{
+    if (cardDetectedHistory.size() < 2)
+        throw std::out_of_range("there are less than 2 cards in history");
+    return *std::prev(cardDetectedHistory.end());
+}
+
+void Card_Identifier::resetCardDetectedHistory()
+{
+    cardDetectedHistory.clear();
+}
 
