@@ -4,7 +4,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(OpenCV REQUIRED)
 
-add_executable(poker main.cpp)
+add_executable(poker main.cpp
+        Card_Identifier.cpp
+        Card_Identifier.h)
 
 target_include_directories(poker PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(poker PRIVATE ${OpenCV_LIBS} darkhelp)
