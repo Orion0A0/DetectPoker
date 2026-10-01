@@ -1,61 +1,71 @@
 #include <filesystem>
 
-#include <DarkHelp.hpp>
-#include <opencv2/imgcodecs.hpp>
+#include "DarkHelpNN.hpp"
+
+#include "Card_Identifier.h"
 
 #define POKER_FOLDER "/poker_model/"
 #define CONFIG_FILE "poker.cfg"
 #define WEIGHTS_FILE "poker_best.weights"
 #define NAMES_FILE "poker.names"
 
-#define WIDTH 756
-#define HEIGHT 1008
-#define TEST_IMG "/home/orion/Downloads/ace.jpg"
-#define TEST_VID "/home/orion/Downloads/vid.mp4"
+#define DEFAULT_CAMERA 0
+#define FIND_NUM_POKER 5
+#define DISPLAY_SCREEN "camera"
+#define RESULT_WINDOW "ResultWindow"
 int main(int argc, char** argv)
 {
-    // currentPath returns build directory, so travel one step upward
-
+    // built inside build directory, so need to go back one step
     std::string currDir = std::filesystem::current_path().parent_path().string();
+
+    // config to prevent unexpect name format that will break the loop up table
     DarkHelp::Config cfg (currDir + POKER_FOLDER + CONFIG_FILE, currDir + POKER_FOLDER +  WEIGHTS_FILE, currDir + POKER_FOLDER + NAMES_FILE);
-    cfg.names_include_percentage = true;
-    cfg.annotation_auto_hide_labels = false;
-    cfg.enable_tiles = false;
-    cfg.combine_tile_predictions = true;
+    cfg.names_include_percentage = false;
+    cfg.include_all_names = false;
 
-    DarkHelp::NN nn (cfg);
+    DarkHelp::NN nn {cfg};
+    cv::Mat frame;
+    cv::VideoCapture camera {DEFAULT_CAMERA, cv::CAP_V4L2};
+    cv::namedWindow(DISPLAY_SCREEN);
 
-    // cv::VideoCapture video(TEST_VID);
-    // cv::namedWindow("show", cv::WINDOW_NORMAL);
-    // cv::resizeWindow("show", cv::Size(WIDTH, HEIGHT));
-    // while (video.isOpened())
-    // {
-    //     cv::Mat frame;
-    //     cv::Mat resized_img;
-    //     video.read(frame);
-    //     if (frame.empty())
-    //         break;
-    //     // cv::resize(frame, resized_img, cv::Size(WIDTH, HEIGHT));
-    //     //
-    //     // const auto result = nn.predict(resized_img);
-    //     const auto result = nn.predict(frame);
-    //     cv::Mat annotate = nn.annotate();
-    //     cv::imshow("show", annotate);
-    //     cv::waitKey(0);
-    // }
+    if (!camera.isOpened())
+    {
+        std::cerr << "ERROR! Unable to open camera\n";
+        return -1;
+    }
+    std::cout << "Start reading" << std::endl;
 
-    cv::Mat origin_img = cv::imread(TEST_IMG);
-    cv::Mat resized_img;
-    cv::resize(origin_img, resized_img, cv::Size(WIDTH, HEIGHT));
-    auto result = nn.predict(resized_img);
-    cv::Mat annotate = nn.annotate();
-    cv::namedWindow("show", cv::WINDOW_NORMAL);
-    cv::resizeWindow("show", cv::Size(2560, 1600));
-    cv::imshow("show", annotate);
-    cv::imwrite("poke.jpg", annotate);
-    cv::waitKey(0);
+    int pokerFound = 0;
+    int timeTaken = 0;
+    while (pokerFound < FIND_NUM_POKER)
+    {
+        camera.read(frame);
+        if (frame.empty())
+        {
+            std::cerr << "ERROR! Read a blank frame\n";
+            break;
+        }
+
+        nn.predict(frame);
+        cv::imshow(DISPLAY_SCREEN, frame);
+
+        if (Card_Identifier::processData(nn.prediction_results))
+        {
+            std::cout << "Found Card: " << Card_Identifier::getLastDetectedCard().to_string() << std::endl;
+            cv::imshow(RESULT_WINDOW,nn.annotate());
+            std::cout << "Press anything to continue" << std::endl;
+            cv::waitKey(0);
+            cv::destroyWindow(RESULT_WINDOW);
+            pokerFound++;
+        } else
+        {
+            std::cout << "Please adjust card's position" << timeTaken++ << std::endl;
+        }
+        if (cv::waitKey(25) == 'q')
+            break;
+    }
+
     cv::destroyAllWindows();
-
-
     return 0;
 }
+

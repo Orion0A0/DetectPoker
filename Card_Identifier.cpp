@@ -45,10 +45,12 @@ bool Card_Identifier::processData(const DarkHelp::PredictionResults& dataVector)
         }
     }
 
+
     Card resultCard = identifier(timeOccurred_Shape, finalNumber, numOfChange_finalNumber);
     if (resultCard.getCardNumber() == EMPTY)
         return false;
-
+    if (cardDetectedHistory.size() >= 1 && resultCard == cardDetectedHistory.back())
+        return false;
     cardDetectedHistory.push_back(resultCard);
     return true;
 
@@ -73,7 +75,6 @@ Card_Identifier::Card Card_Identifier::identifier(const int timeOccurred_Shape[]
     // Make sure the model detects at least one suit
     if (mostOccurredSuit == EMPTY)
         return Card{};
-
     return Card{mostOccurredSuit, finalNumber};
 }
 

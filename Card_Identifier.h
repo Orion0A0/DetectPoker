@@ -25,7 +25,7 @@ class Card_Identifier
         Card(): cardSuit(EMPTY), cardNumber(EMPTY){}
         Card(pokerSymbol suit, pokerSymbol number): cardSuit(suit), cardNumber(number){}
 
-
+        bool operator==(const Card &other) const { return (cardNumber == other.cardNumber) && (cardSuit == other.cardSuit);}
         [[nodiscard]] pokerSymbol getCardSuit() const { return cardSuit;}
         [[nodiscard]] pokerSymbol getCardNumber() const {return cardNumber;}
         void setCardSuit(pokerSymbol newSuit) {cardSuit = newSuit;}
