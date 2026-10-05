@@ -6,6 +6,7 @@
 
 #define OFFSET 13
 #define NUMBER_OF_SUIT 4
+#define MIN_CONFIDENCE 0.5f
 static const std::unordered_map<std::string, pokerSymbol> lookupTable =
 {
     {"1", ONE},
@@ -29,24 +30,27 @@ static const std::unordered_map<std::string, pokerSymbol> lookupTable =
 
 bool Card_Identifier::processData(const DarkHelp::PredictionResults& dataVector)
 {
-    int timeOccurred_Shape[NUMBER_OF_SUIT] = {0, 0, 0, 0};
-    pokerSymbol finalNumber = EMPTY;
-    int numOfChange_finalNumber = 0;
+    int suitsCount[NUMBER_OF_SUIT] = {0, 0, 0, 0};
+    pokerSymbol resultNumber = EMPTY;
+    int numOfChangeInResultNumber = 0;
+    float rankConfidence = -1;
     for (const auto& result : dataVector)
     {
         pokerSymbol currentVectorValue = lookupTable.at(result.name);
         if (currentVectorValue > OFFSET)
         {
-            timeOccurred_Shape[currentVectorValue - OFFSET]++;
-        } else if (finalNumber != currentVectorValue)
+            suitsCount[currentVectorValue - OFFSET]++;
+        } else if (resultNumber != currentVectorValue)
         {
-            finalNumber = currentVectorValue;
-            numOfChange_finalNumber++;
+            resultNumber = currentVectorValue;
+            rankConfidence = result.best_probability;
+            numOfChangeInResultNumber++;
         }
     }
 
-
-    Card resultCard = identifier(timeOccurred_Shape, finalNumber, numOfChange_finalNumber);
+    if (rankConfidence < MIN_CONFIDENCE)
+        return false;
+    Card resultCard = identifier(suitsCount, resultNumber, numOfChangeInResultNumber);
     if (resultCard.getCardNumber() == EMPTY)
         return false;
     if (cardDetectedHistory.size() >= 1 && resultCard == cardDetectedHistory.back())
@@ -56,19 +60,19 @@ bool Card_Identifier::processData(const DarkHelp::PredictionResults& dataVector)
 
 }
 
-Card_Identifier::Card Card_Identifier::identifier(const int timeOccurred_Shape[], pokerSymbol finalNumber, int numOfChange_finalNumber)
+Card_Identifier::Card Card_Identifier::identifier(const int suitsCount[], pokerSymbol finalNumber, int numOfChangeInResultNumber)
 {
     // one time: EMPTY -> final number
-    if (numOfChange_finalNumber != 1)
+    if (numOfChangeInResultNumber != 1)
         return Card{};
 
     pokerSymbol mostOccurredSuit = EMPTY;
     int numAppearance = 0;
     for (int i = 1; i < NUMBER_OF_SUIT; i++)
     {
-        if (timeOccurred_Shape[i] > numAppearance)
+        if (suitsCount[i] > numAppearance)
         {
-            numAppearance = timeOccurred_Shape[i];
+            numAppearance = suitsCount[i];
             mostOccurredSuit = static_cast<pokerSymbol>(i + OFFSET);
         }
     }

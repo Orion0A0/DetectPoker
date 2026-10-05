@@ -1,7 +1,5 @@
 #include <filesystem>
 
-#include "DarkHelpNN.hpp"
-
 #include "Card_Identifier.h"
 
 #define POKER_FOLDER "/poker_model/"
@@ -18,7 +16,7 @@ int main(int argc, char** argv)
     // built inside build directory, so need to go back one step
     std::string currDir = std::filesystem::current_path().parent_path().string();
 
-    // config to prevent unexpect name format that will break the loop up table
+    // config to prevent unexpect name format that will break the lookup table
     DarkHelp::Config cfg (currDir + POKER_FOLDER + CONFIG_FILE, currDir + POKER_FOLDER +  WEIGHTS_FILE, currDir + POKER_FOLDER + NAMES_FILE);
     cfg.names_include_percentage = false;
     cfg.include_all_names = false;
